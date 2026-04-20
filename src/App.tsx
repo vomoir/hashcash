@@ -1,24 +1,35 @@
 import React, { useEffect } from 'react';
 import { useHashCashStore } from './store/useHashCashStore';
-import { subscribeToBlockchain } from './services/firebase';
+import { subscribeToBlockchain, subscribeToPendingTransactions } from './services/firebase';
 import Miner from './components/Miner';
 import Exchange from './components/Exchange';
 import Blockchain from './components/Blockchain';
+import Wallet from './components/Wallet';
 
 const App: React.FC = () => {
-  const { setBlockchain, setUserAddress } = useHashCashStore();
+  const { setBlockchain, setPendingTransactions, setUserAddress } = useHashCashStore();
 
   useEffect(() => {
-    // Generate a simple anonymous ID for the user
-    const id = 'user_' + Math.random().toString(36).substr(2, 9);
-    setUserAddress(id);
+    // Try to load existing wallet from localStorage
+    const savedAddress = localStorage.getItem('hashcash_address');
+    if (savedAddress) {
+      setUserAddress(savedAddress);
+    }
 
     // Subscribe to blockchain updates from Firestore
-    const unsubscribe = subscribeToBlockchain((blocks) => {
+    const unsubscribeBlockchain = subscribeToBlockchain((blocks) => {
       setBlockchain(blocks);
     });
 
-    return () => unsubscribe();
+    // Subscribe to pending transactions pool
+    const unsubscribePending = subscribeToPendingTransactions((txs) => {
+      setPendingTransactions(txs);
+    });
+
+    return () => {
+      unsubscribeBlockchain();
+      unsubscribePending();
+    };
   }, []);
 
   return (
@@ -29,11 +40,12 @@ const App: React.FC = () => {
       </header>
 
       <div className="row">
-        <div className="col-md-6">
+        <div className="col-md-5">
+          <Wallet />
           <Miner />
-          <Exchange />
         </div>
-        <div className="col-md-6">
+        <div className="col-md-7">
+          <Exchange />
           <Blockchain />
         </div>
       </div>

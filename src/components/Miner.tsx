@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useHashCashStore } from '../store/useHashCashStore';
-import { addBlockToFirestore } from '../services/firebase';
+import { addBlockToFirestore, clearPendingTransactions } from '../services/firebase';
 
 const Miner: React.FC = () => {
-  const { mining, setMining, blockchain, userAddress } = useHashCashStore();
+  const { mining, setMining, blockchain, userAddress, pendingTransactions } = useHashCashStore();
   const [level, setLevel] = useState(250);
   const [zeros, setZeros] = useState(2);
   const [status, setStatus] = useState('Idle');
@@ -14,6 +14,9 @@ const Miner: React.FC = () => {
     setMining(true);
     setStatus('Mining...');
     setResult(null);
+
+    // Capture the transactions that will be included in this block
+    const txsToInclude = [...pendingTransactions];
 
     const salt = Math.floor(Math.random() * 800) + 100;
     const currTime = Date.now();
@@ -47,10 +50,16 @@ const Miner: React.FC = () => {
             nonce: salt,
             hash: hash,
             previousHash: blockchain.length > 0 ? blockchain[0].hash : '0',
-            transactions: [], // In a real scenario, include pending transactions
+            transactions: txsToInclude, 
             miner: userAddress
           };
           await addBlockToFirestore(newBlock);
+
+          // Clear those transactions from the pending pool in Firestore
+          if (txsToInclude.length > 0) {
+            const txIds = txsToInclude.map((tx: any) => tx.id);
+            await clearPendingTransactions(txIds);
+          }
         } else {
           setStatus('Insufficient work level achieved.');
         }

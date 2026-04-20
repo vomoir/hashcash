@@ -3,14 +3,25 @@ import { useHashCashStore } from '../store/useHashCashStore';
 import { submitTransaction } from '../services/firebase';
 
 const Exchange: React.FC = () => {
-  const { userAddress, balance } = useHashCashStore();
+  const { userAddress, getBalance } = useHashCashStore();
   const [toAddress, setToAddress] = useState('');
   const [amount, setAmount] = useState(0);
   const [status, setStatus] = useState('');
 
+  const balance = getBalance(userAddress);
+
   const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!userAddress) {
+      setStatus('Please create/load a wallet first.');
+      return;
+    }
     if (amount <= 0 || !toAddress) return;
+    if (amount > balance) {
+      setStatus('Insufficient balance!');
+      return;
+    }
 
     const tx = {
       from: userAddress,
@@ -28,9 +39,8 @@ const Exchange: React.FC = () => {
   };
 
   return (
-    <div className="card p-4 mt-4">
+    <div className="card p-4 mb-4">
       <h3>Exchange Tokens</h3>
-      <p>Your Balance: <strong>{balance} HC</strong></p>
       <form onSubmit={handleTransfer}>
         <div className="form-group">
           <label>Recipient Address:</label>
@@ -39,7 +49,7 @@ const Exchange: React.FC = () => {
             className="form-control" 
             value={toAddress} 
             onChange={(e) => setToAddress(e.target.value)} 
-            placeholder="Enter address"
+            placeholder="Paste recipient address here"
           />
         </div>
         <div className="form-group">
@@ -51,9 +61,11 @@ const Exchange: React.FC = () => {
             onChange={(e) => setAmount(Number(e.target.value))} 
           />
         </div>
-        <button type="submit" className="btn btn-success mt-3">Send Tokens</button>
+        <button type="submit" className="btn btn-success mt-2" disabled={!userAddress}>
+          Send Tokens
+        </button>
       </form>
-      {status && <div className="mt-3 alert alert-secondary">{status}</div>}
+      {status && <div className="mt-3 alert alert-info py-2"><small>{status}</small></div>}
     </div>
   );
 };

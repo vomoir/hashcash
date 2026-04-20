@@ -15,6 +15,22 @@ const Blockchain: React.FC = () => {
               <small>{new Date(block.timestamp).toLocaleString()}</small>
             </div>
             <p className="mb-1 text-truncate">Hash: <code>{block.hash}</code></p>
+            
+            <div className="my-2 border-top pt-2">
+              <small className="font-weight-bold">Transactions ({block.transactions?.length || 0}):</small>
+              {block.transactions && block.transactions.length > 0 ? (
+                <ul className="list-unstyled mb-0">
+                  {block.transactions.map((tx: any, tIdx: number) => (
+                    <li key={tIdx} className="text-muted" style={{ fontSize: '0.8rem' }}>
+                      From: <code>{tx.from.substring(0, 10)}...</code> → To: <code>{tx.to.substring(0, 10)}...</code> Amount: <strong>{tx.amount} HC</strong>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mb-0 text-muted" style={{ fontSize: '0.8rem' }}>No transactions in this block.</p>
+              )}
+            </div>
+            
             <small>Nonce: {block.nonce} | Miner: {block.miner || 'Unknown'}</small>
           </div>
         ))}
