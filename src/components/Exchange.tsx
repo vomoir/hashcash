@@ -1,14 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useHashCashStore } from '../store/useHashCashStore';
 import { submitTransaction } from '../services/firebase';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 
 const Exchange: React.FC = () => {
   const { userAddress, getBalance } = useHashCashStore();
   const [toAddress, setToAddress] = useState('');
   const [amount, setAmount] = useState(0);
   const [status, setStatus] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
 
   const balance = getBalance(userAddress);
+
+  useEffect(() => {
+    let scanner: Html5QrcodeScanner | null = null;
+
+    if (showScanner) {
+      scanner = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        /* verbose= */ false
+      );
+
+      scanner.render((decodedText) => {
+        setToAddress(decodedText);
+        setShowScanner(false);
+        if (scanner) {
+          scanner.clear().catch(error => console.error("Failed to clear scanner", error));
+        }
+      }, (error) => {
+        // Ignore errors during scanning
+      });
+    }
+
+    return () => {
+      if (scanner) {
+        scanner.clear().catch(error => console.error("Failed to clear scanner on unmount", error));
+      }
+    };
+  }, [showScanner]);
 
   const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +73,19 @@ const Exchange: React.FC = () => {
       <h3>Exchange Tokens</h3>
       <form onSubmit={handleTransfer}>
         <div className="form-group">
-          <label>Recipient Address:</label>
+          <label className="d-flex justify-content-between">
+            Recipient Address:
+            <button 
+              type="button" 
+              className={`btn btn-sm ${showScanner ? 'btn-danger' : 'btn-info'}`}
+              onClick={() => setShowScanner(!showScanner)}
+            >
+              {showScanner ? 'Close Scanner' : 'Scan QR Code'}
+            </button>
+          </label>
+          
+          {showScanner && <div id="reader" className="mb-2"></div>}
+
           <input 
             type="text" 
             className="form-control" 
@@ -52,7 +94,7 @@ const Exchange: React.FC = () => {
             placeholder="Paste recipient address here"
           />
         </div>
-        <div className="form-group">
+        <div className="form-group mt-3">
           <label>Amount:</label>
           <input 
             type="number" 
@@ -61,7 +103,7 @@ const Exchange: React.FC = () => {
             onChange={(e) => setAmount(Number(e.target.value))} 
           />
         </div>
-        <button type="submit" className="btn btn-success mt-2" disabled={!userAddress}>
+        <button type="submit" className="btn btn-success mt-3" disabled={!userAddress}>
           Send Tokens
         </button>
       </form>

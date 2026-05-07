@@ -19,8 +19,8 @@ Note: The root directory contains `hashcash.html` and a `js/` folder which appea
 
 - **`src/components/`**:
   - `Miner.tsx`: Controls for the mining process, managing difficulty and work level.
-  - `Wallet.tsx`: Displays the user's "address" and calculated balance.
-  - `Exchange.tsx`: UI for sending transactions to the pending pool.
+  - `Wallet.tsx`: Displays the user's "address", calculated balance, and a generated QR code for easy sharing.
+  - `Exchange.tsx`: UI for sending transactions to the pending pool, including a QR code scanner to quickly set the recipient address.
   - `Blockchain.tsx`: Visualizes the current state of the chain.
 - **`src/services/firebase.ts`**: Handles all Firestore interactions including subscriptions and document creation.
 - **`src/store/useHashCashStore.ts`**: The central source of truth for the local application state, including balance calculation logic.
