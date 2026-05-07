@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useHashCashStore } from '../store/useHashCashStore';
+import { QRCodeSVG } from 'qrcode.react';
 
 const Wallet: React.FC = () => {
   const { userAddress, setUserAddress, getBalance } = useHashCashStore();
@@ -24,7 +25,10 @@ const Wallet: React.FC = () => {
     <div className="card p-4 mb-4 border-primary">
       <h3>Your Wallet</h3>
       {userAddress ? (
-        <div>
+        <div className="text-center">
+          <div className="mb-3">
+            <QRCodeSVG value={userAddress} size={128} />
+          </div>
           <p className="mb-1">Address: <code>{userAddress}</code></p>
           <p className="display-4 text-success">{balance.toFixed(2)} HC</p>
           <button className="btn btn-outline-secondary btn-sm" onClick={() => setUserAddress('')}>

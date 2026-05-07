@@ -10,6 +10,20 @@ const Miner: React.FC = () => {
   const [progress, setProgress] = useState({ hashes: 0, time: 0 });
   const [result, setResult] = useState<any>(null);
 
+  const randomizeDifficulty = () => {
+    const newZeros = Math.floor(Math.random() * 4) + 2; // 2 to 5
+    // Level compensates for difficulty: roughly 80-120% of expected hashes (16^zeros)
+    const baseExpected = Math.pow(16, newZeros);
+    const randomizedLevel = Math.floor(baseExpected * (0.8 + Math.random() * 0.4));
+    
+    setZeros(newZeros);
+    setLevel(randomizedLevel);
+  };
+
+  useEffect(() => {
+    randomizeDifficulty();
+  }, []);
+
   const startMining = () => {
     setMining(true);
     setStatus('Mining...');
@@ -60,6 +74,9 @@ const Miner: React.FC = () => {
             const txIds = txsToInclude.map((tx: any) => tx.id);
             await clearPendingTransactions(txIds);
           }
+
+          // Randomize difficulty for the next block
+          randomizeDifficulty();
         } else {
           setStatus('Insufficient work level achieved.');
         }
@@ -79,11 +96,20 @@ const Miner: React.FC = () => {
         <label>Minimum Work Level:</label>
         <input type="number" className="form-control" value={level} onChange={(e) => setLevel(Number(e.target.value))} />
       </div>
-      <button className="btn btn-primary mt-3" onClick={startMining} disabled={mining}>
+      <button 
+        className="btn btn-primary mt-3" 
+        onClick={startMining} 
+        disabled={mining || pendingTransactions.length === 0}
+      >
         {mining ? 'Mining...' : 'Start Mining'}
       </button>
 
       <div className="mt-4">
+        {pendingTransactions.length === 0 && !mining && (
+          <div className="alert alert-warning py-2">
+            <small>No pending transactions to mine. Send some tokens first!</small>
+          </div>
+        )}
         <p>Status: <strong>{status}</strong></p>
         <p>Hashes applied: {progress.hashes}</p>
         {progress.time > 0 && <p>Time taken: {progress.time.toFixed(2)}s</p>}
