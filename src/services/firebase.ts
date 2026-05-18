@@ -59,7 +59,7 @@ export const getAllWallets = async () => {
 };
 
 export const subscribeToBlockchain = (callback: (blocks: any[]) => void) => {
-  const q = query(blockchainCollection, orderBy("index", "desc"), limit(50));
+  const q = query(blockchainCollection, orderBy("index", "desc"), limit(1000));
   return onSnapshot(q, (snapshot) => {
     const blocks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     callback(blocks);

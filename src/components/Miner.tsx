@@ -57,6 +57,7 @@ const Miner: React.FC = () => {
         setResult({ hash, salt });
 
         if (appliedHashes >= level) {
+          setStatus('Publishing block...');
           // Add to blockchain
           const newBlock = {
             index: blockchain.length,
@@ -75,6 +76,7 @@ const Miner: React.FC = () => {
             await clearPendingTransactions(txIds);
           }
 
+          setStatus('Block Mined Successfully!');
           // Randomize difficulty for the next block
           randomizeDifficulty();
         } else {

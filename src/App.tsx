@@ -22,7 +22,8 @@ const App: React.FC = () => {
     currentUser,
     allWallets,
     authLoading,
-    isAdmin
+    isAdmin,
+    userAddress
   } = useHashCashStore();
 
   useEffect(() => {
@@ -77,15 +78,14 @@ const App: React.FC = () => {
       setMyWallets(filtered);
 
       // If no wallet is currently selected, but the user has wallets, auto-select the first one
-      const currentAddress = useHashCashStore.getState().userAddress;
-      if (!currentAddress && filtered.length > 0) {
+      if (!userAddress && filtered.length > 0) {
         setUserAddress(filtered[0].address);
         localStorage.setItem('hashcash_address', filtered[0].address);
       }
     } else {
       setMyWallets([]);
     }
-  }, [currentUser, allWallets, setMyWallets, setUserAddress]);
+  }, [currentUser, allWallets, setMyWallets, setUserAddress, userAddress]);
 
   if (authLoading) {
     return (

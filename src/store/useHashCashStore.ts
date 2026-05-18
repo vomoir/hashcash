@@ -75,21 +75,32 @@ interface HashCashState {
     const miningReward = 6.25;
 
     // 1. Calculate confirmed balance from blockchain
+    const confirmedTxIds = new Set<string>();
     get().blockchain.forEach(block => {
+      // 1. Reward the miner
       if (block.miner === address) {
         balance += miningReward;
       }
       
-      block.transactions?.forEach(tx => {
-        if (tx.to === address) balance += tx.amount;
-        if (tx.from === address) balance -= tx.amount;
-      });
+      // 2. Process transactions in the block
+      if (block.transactions && Array.isArray(block.transactions)) {
+        block.transactions.forEach(tx => {
+          if (tx.id) confirmedTxIds.add(tx.id);
+          const val = Number(tx.amount);
+          if (tx.to === address) balance += val;
+          if (tx.from === address) balance -= val;
+        });
+      }
     });
 
-    // 2. Include pending transactions for immediate feedback
+    // 2. Include pending transactions for immediate feedback, 
+    // but ONLY if they haven't been confirmed in a block yet
     get().pendingTransactions.forEach(tx => {
-      if (tx.to === address) balance += tx.amount;
-      if (tx.from === address) balance -= tx.amount;
+      if (tx.id && confirmedTxIds.has(tx.id)) return;
+      
+      const val = Number(tx.amount);
+      if (tx.to === address) balance += val;
+      if (tx.from === address) balance -= val;
     });
 
     return balance;

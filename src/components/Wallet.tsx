@@ -23,11 +23,17 @@ const Wallet: React.FC = () => {
   };
 
   const balance = getBalance(userAddress);
+  const isOwner = currentUser && myWallets.some(w => w.address === userAddress);
 
   return (
     <div className="card p-4 mb-4 border-primary shadow-sm">
-      <div className="mb-3">
+      <div className="d-flex justify-content-between align-items-center mb-3">
         <h3 className="mb-0">Your Wallet</h3>
+        {userAddress && (
+          <span className={`badge ${isOwner ? 'bg-success' : 'bg-warning text-dark'}`}>
+            {isOwner ? 'Owner' : 'Read-only'}
+          </span>
+        )}
       </div>
 
       {authError && (

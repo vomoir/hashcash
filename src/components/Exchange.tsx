@@ -130,7 +130,9 @@ const Exchange: React.FC = () => {
         {showDirectory && (
           <WalletDirectory onSelectAddress={(address) => {
             setToAddress(address);
-            setShowDirectory(false);
+            // We'll keep the directory open so they can see their choice reflected
+            // and perhaps provide a small feedback message in the form
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }} />
         )}
       </div>

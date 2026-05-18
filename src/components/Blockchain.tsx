@@ -21,8 +21,17 @@ const Blockchain: React.FC = () => {
               {block.transactions && block.transactions.length > 0 ? (
                 <ul className="list-unstyled mb-0">
                   {block.transactions.map((tx: any, tIdx: number) => (
-                    <li key={tIdx} className="text-muted" style={{ fontSize: '0.8rem' }}>
-                      From: <code>{tx.from.substring(0, 10)}...</code> → To: <code>{tx.to.substring(0, 10)}...</code> Amount: <strong>{tx.amount} HC</strong>
+                    <li key={tIdx} className="text-muted d-flex justify-content-between" style={{ fontSize: '0.8rem' }}>
+                      <span>
+                        {tx.from === 'GOD_MOD_BENEFACTOR' ? (
+                          <span className="badge bg-warning text-dark me-1">God Mode</span>
+                        ) : (
+                          <code>{tx.from.substring(0, 10)}...</code>
+                        )}
+                        <span className="mx-1">→</span>
+                        <code>{tx.to.substring(0, 10)}...</code>
+                      </span>
+                      <strong>{tx.amount} HC</strong>
                     </li>
                   ))}
                 </ul>
