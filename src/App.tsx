@@ -1,36 +1,56 @@
 import React, { useEffect } from 'react';
 import { useHashCashStore } from './store/useHashCashStore';
-import { subscribeToBlockchain, subscribeToPendingTransactions } from './services/firebase';
+import { subscribeToBlockchain, subscribeToPendingTransactions, subscribeToWallets, auth, loginAnonymously } from './services/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import Miner from './components/Miner';
 import Exchange from './components/Exchange';
 import Blockchain from './components/Blockchain';
 import Wallet from './components/Wallet';
 
 const App: React.FC = () => {
-  const { setBlockchain, setPendingTransactions, setUserAddress } = useHashCashStore();
+  const { setBlockchain, setPendingTransactions, setUserAddress, setCurrentUser, setAllWallets, setMyWallets } = useHashCashStore();
 
   useEffect(() => {
-    // Try to load existing wallet from localStorage
+    // 1. Handle Auth
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setCurrentUser(user);
+      } else {
+        loginAnonymously().catch(console.error);
+      }
+    });
+
+    // 2. Load existing wallet from localStorage (as a default selection)
     const savedAddress = localStorage.getItem('hashcash_address');
     if (savedAddress) {
       setUserAddress(savedAddress);
     }
 
-    // Subscribe to blockchain updates from Firestore
+    // 3. Subscriptions
     const unsubscribeBlockchain = subscribeToBlockchain((blocks) => {
       setBlockchain(blocks);
     });
 
-    // Subscribe to pending transactions pool
     const unsubscribePending = subscribeToPendingTransactions((txs) => {
       setPendingTransactions(txs);
     });
 
+    const unsubscribeWallets = subscribeToWallets((wallets) => {
+      setAllWallets(wallets);
+      // Filter my wallets based on current user
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        setMyWallets(wallets.filter(w => w.ownerUid === currentUser.uid));
+      }
+    });
+
     return () => {
+      unsubscribeAuth();
       unsubscribeBlockchain();
       unsubscribePending();
+      unsubscribeWallets();
     };
-  }, []);
+  }, [setCurrentUser, setMyWallets]);
 
   return (
     <div className="container py-5">

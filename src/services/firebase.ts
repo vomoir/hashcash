@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, doc, writeBatch } from "firebase/firestore";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, doc, writeBatch, setDoc, getDocs, where } from "firebase/firestore";
+import { getAuth, signInAnonymously } from "firebase/auth";
 
 // Replace this with your actual Firebase config
 const firebaseConfig = {
@@ -14,9 +15,39 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
+export const auth = getAuth(app);
 
 export const blockchainCollection = collection(db, "blockchain");
 export const transactionsCollection = collection(db, "transactions");
+export const walletsCollection = collection(db, "wallets");
+
+export const loginAnonymously = async () => {
+  return signInAnonymously(auth);
+};
+
+export const registerWallet = async (address: string, ownerUid: string) => {
+  try {
+    await setDoc(doc(walletsCollection, address), {
+      address,
+      ownerUid,
+      createdAt: Date.now(),
+      label: `Wallet ${address.substring(5, 10)}`
+    });
+  } catch (e) {
+    console.error("Error registering wallet: ", e);
+  }
+};
+
+export const getMyWallets = async (ownerUid: string) => {
+  const q = query(walletsCollection, where("ownerUid", "==", ownerUid));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => doc.data());
+};
+
+export const getAllWallets = async () => {
+  const snapshot = await getDocs(walletsCollection);
+  return snapshot.docs.map(doc => doc.data());
+};
 
 export const subscribeToBlockchain = (callback: (blocks: any[]) => void) => {
   const q = query(blockchainCollection, orderBy("index", "desc"), limit(50));
@@ -31,6 +62,13 @@ export const subscribeToPendingTransactions = (callback: (txs: any[]) => void) =
   return onSnapshot(q, (snapshot) => {
     const txs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     callback(txs);
+  });
+};
+
+export const subscribeToWallets = (callback: (wallets: any[]) => void) => {
+  return onSnapshot(walletsCollection, (snapshot) => {
+    const wallets = snapshot.docs.map(doc => doc.data());
+    callback(wallets);
   });
 };
 
