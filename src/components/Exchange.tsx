@@ -12,7 +12,7 @@ const Exchange: React.FC = () => {
   const [showDirectory, setShowDirectory] = useState(false);
 
   const balance = getBalance(userAddress);
-  const isOwner = myWallets.some(w => w.address === userAddress);
+  const isOwner = currentUser && myWallets.some(w => w.address === userAddress);
 
   useEffect(() => {
     // ... rest of effect ...

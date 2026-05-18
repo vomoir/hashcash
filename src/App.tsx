@@ -7,6 +7,7 @@ import Exchange from './components/Exchange';
 import Blockchain from './components/Blockchain';
 import Wallet from './components/Wallet';
 import Login from './components/Login';
+import GodMode from './components/GodMode';
 
 const App: React.FC = () => {
   const { 
@@ -20,7 +21,8 @@ const App: React.FC = () => {
     setMyWallets,
     currentUser,
     allWallets,
-    authLoading
+    authLoading,
+    isAdmin
   } = useHashCashStore();
 
   useEffect(() => {
@@ -73,10 +75,17 @@ const App: React.FC = () => {
     if (currentUser && allWallets.length > 0) {
       const filtered = allWallets.filter(w => w.ownerUid === currentUser.uid);
       setMyWallets(filtered);
+
+      // If no wallet is currently selected, but the user has wallets, auto-select the first one
+      const currentAddress = useHashCashStore.getState().userAddress;
+      if (!currentAddress && filtered.length > 0) {
+        setUserAddress(filtered[0].address);
+        localStorage.setItem('hashcash_address', filtered[0].address);
+      }
     } else {
       setMyWallets([]);
     }
-  }, [currentUser, allWallets, setMyWallets]);
+  }, [currentUser, allWallets, setMyWallets, setUserAddress]);
 
   if (authLoading) {
     return (
@@ -108,6 +117,8 @@ const App: React.FC = () => {
           </button>
         </div>
       </header>
+
+      {isAdmin && <GodMode />}
 
       <div className="row">
         <div className="col-md-5">

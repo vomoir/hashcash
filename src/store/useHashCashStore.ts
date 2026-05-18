@@ -31,6 +31,7 @@ interface HashCashState {
   mining: boolean;
   userAddress: string;
   currentUser: any | null;
+  isAdmin: boolean;
   authError: string | null;
   authLoading: boolean;
   myWallets: WalletInfo[];
@@ -54,6 +55,7 @@ interface HashCashState {
   mining: false,
   userAddress: '',
   currentUser: null,
+  isAdmin: false,
   authError: null,
   authLoading: true,
   myWallets: [],
@@ -62,7 +64,7 @@ interface HashCashState {
   setPendingTransactions: (pendingTransactions) => set({ pendingTransactions }),
   setMining: (isMining) => set({ mining: isMining }),
   setUserAddress: (userAddress) => set({ userAddress }),
-  setCurrentUser: (currentUser) => set({ currentUser }),
+  setCurrentUser: (currentUser) => set({ currentUser, isAdmin: currentUser?.email === 'vomoir@gmail.com' }),
   setAuthError: (authError) => set({ authError }),
   setAuthLoading: (authLoading) => set({ authLoading }),
   setMyWallets: (myWallets) => set({ myWallets }),
@@ -70,24 +72,26 @@ interface HashCashState {
   
   getBalance: (address: string) => {
     let balance = 0;
-    const miningReward = 6.25; // Standard Bitcoin-style reward
+    const miningReward = 6.25;
 
+    // 1. Calculate confirmed balance from blockchain
     get().blockchain.forEach(block => {
-      // 1. Reward the miner
       if (block.miner === address) {
         balance += miningReward;
       }
       
-      // 2. Process transactions in the block
       block.transactions?.forEach(tx => {
-        if (tx.to === address) {
-          balance += tx.amount;
-        }
-        if (tx.from === address) {
-          balance -= tx.amount;
-        }
+        if (tx.to === address) balance += tx.amount;
+        if (tx.from === address) balance -= tx.amount;
       });
     });
+
+    // 2. Include pending transactions for immediate feedback
+    get().pendingTransactions.forEach(tx => {
+      if (tx.to === address) balance += tx.amount;
+      if (tx.from === address) balance -= tx.amount;
+    });
+
     return balance;
   }
 }));

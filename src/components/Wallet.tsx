@@ -10,6 +10,7 @@ const Wallet: React.FC = () => {
   const createWallet = async () => {
     const newId = 'user_' + Math.random().toString(36).substr(2, 9);
     if (currentUser) {
+      // In firebase.ts: registerWallet(address: string, ownerUid: string)
       await registerWallet(newId, currentUser.uid);
     }
     setUserAddress(newId);

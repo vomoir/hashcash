@@ -99,15 +99,15 @@ const Miner: React.FC = () => {
       <button 
         className="btn btn-primary mt-3" 
         onClick={startMining} 
-        disabled={mining || pendingTransactions.length === 0}
+        disabled={mining}
       >
         {mining ? 'Mining...' : 'Start Mining'}
       </button>
 
       <div className="mt-4">
         {pendingTransactions.length === 0 && !mining && (
-          <div className="alert alert-warning py-2">
-            <small>No pending transactions to mine. Send some tokens first!</small>
+          <div className="alert alert-info py-2">
+            <small>No pending transactions. Mining will still reward you {6.25} HC.</small>
           </div>
         )}
         <p>Status: <strong>{status}</strong></p>
