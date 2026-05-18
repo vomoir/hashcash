@@ -1,57 +1,90 @@
 import React, { useState } from 'react';
 import { useHashCashStore } from '../store/useHashCashStore';
 import { QRCodeSVG } from 'qrcode.react';
+import { registerWallet } from '../services/firebase';
 
 const Wallet: React.FC = () => {
-  const { userAddress, setUserAddress, getBalance } = useHashCashStore();
+  const { userAddress, setUserAddress, getBalance, currentUser, myWallets } = useHashCashStore();
   const [inputAddress, setInputAddress] = useState('');
 
-  const createWallet = () => {
+  const createWallet = async () => {
     const newId = 'user_' + Math.random().toString(36).substr(2, 9);
+    if (currentUser) {
+      await registerWallet(newId, currentUser.uid);
+    }
     setUserAddress(newId);
     localStorage.setItem('hashcash_address', newId);
   };
 
-  const loadWallet = () => {
-    if (inputAddress.trim()) {
-      setUserAddress(inputAddress.trim());
-      localStorage.setItem('hashcash_address', inputAddress.trim());
-    }
+  const loadWallet = (address: string) => {
+    setUserAddress(address);
+    localStorage.setItem('hashcash_address', address);
   };
 
   const balance = getBalance(userAddress);
 
   return (
-    <div className="card p-4 mb-4 border-primary">
-      <h3>Your Wallet</h3>
+    <div className="card p-4 mb-4 border-primary shadow-sm">
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h3>Your Wallet</h3>
+        <span className="badge bg-info text-dark">
+          {currentUser ? `User: ${currentUser.uid.substring(0, 8)}` : 'Logging in...'}
+        </span>
+      </div>
+
       {userAddress ? (
         <div className="text-center">
           <div className="mb-3">
             <QRCodeSVG value={userAddress} size={128} />
           </div>
-          <p className="mb-1">Address: <code>{userAddress}</code></p>
-          <p className="display-4 text-success">{balance.toFixed(2)} HC</p>
-          <button className="btn btn-outline-secondary btn-sm" onClick={() => setUserAddress('')}>
-            Switch Wallet
-          </button>
+          <p className="mb-1 text-muted small">Active Address:</p>
+          <p className="mb-2"><code>{userAddress}</code></p>
+          <p className="display-4 text-success mb-3">{balance.toFixed(2)} HC</p>
+          <div className="d-grid gap-2">
+            <button className="btn btn-outline-secondary btn-sm" onClick={() => setUserAddress('')}>
+              Change Active Wallet
+            </button>
+          </div>
         </div>
       ) : (
         <div>
-          <button className="btn btn-primary btn-block mb-3" onClick={createWallet}>
-            Create New Wallet
+          <button className="btn btn-primary w-100 mb-3" onClick={createWallet}>
+            <i className="bi bi-plus-circle me-2"></i>Create New Wallet
           </button>
-          <div className="input-group">
+          
+          <div className="input-group mb-4">
             <input 
               type="text" 
               className="form-control" 
-              placeholder="Or enter existing address" 
+              placeholder="Enter address manually" 
               value={inputAddress}
               onChange={(e) => setInputAddress(e.target.value)}
             />
-            <div className="input-group-append">
-              <button className="btn btn-secondary" onClick={loadWallet}>Load</button>
-            </div>
+            <button className="btn btn-outline-secondary" onClick={() => loadWallet(inputAddress.trim())}>Load</button>
           </div>
+
+          {myWallets.length > 0 && (
+            <div>
+              <h5 className="mb-3 text-secondary">My Wallets</h5>
+              <div className="list-group list-group-flush">
+                {myWallets.map(wallet => (
+                  <button 
+                    key={wallet.address} 
+                    className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                    onClick={() => loadWallet(wallet.address)}
+                  >
+                    <div>
+                      <div className="fw-bold text-truncate" style={{maxWidth: '150px'}}>{wallet.label}</div>
+                      <code className="small">{wallet.address}</code>
+                    </div>
+                    <span className="badge bg-success rounded-pill">
+                      {getBalance(wallet.address).toFixed(1)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

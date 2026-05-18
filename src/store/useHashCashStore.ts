@@ -18,15 +18,28 @@ export interface Block {
   miner: string;
 }
 
+export interface WalletInfo {
+  address: string;
+  ownerUid: string;
+  createdAt: number;
+  label: string;
+}
+
 interface HashCashState {
   blockchain: Block[];
   pendingTransactions: Transaction[];
   mining: boolean;
   userAddress: string;
+  currentUser: any | null;
+  myWallets: WalletInfo[];
+  allWallets: WalletInfo[];
   setBlockchain: (blocks: Block[]) => void;
   setPendingTransactions: (txs: Transaction[]) => void;
   setMining: (isMining: boolean) => void;
   setUserAddress: (address: string) => void;
+  setCurrentUser: (user: any) => void;
+  setMyWallets: (wallets: WalletInfo[]) => void;
+  setAllWallets: (wallets: WalletInfo[]) => void;
   // Computed balance helper
   getBalance: (address: string) => number;
 }
@@ -36,10 +49,16 @@ export const useHashCashStore = create<HashCashState>((set, get) => ({
   pendingTransactions: [],
   mining: false,
   userAddress: '',
+  currentUser: null,
+  myWallets: [],
+  allWallets: [],
   setBlockchain: (blocks) => set({ blockchain: blocks }),
   setPendingTransactions: (pendingTransactions) => set({ pendingTransactions }),
   setMining: (isMining) => set({ mining: isMining }),
   setUserAddress: (userAddress) => set({ userAddress }),
+  setCurrentUser: (currentUser) => set({ currentUser }),
+  setMyWallets: (myWallets) => set({ myWallets }),
+  setAllWallets: (allWallets) => set({ allWallets }),
   
   getBalance: (address: string) => {
     let balance = 0;

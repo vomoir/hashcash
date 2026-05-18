@@ -2,17 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useHashCashStore } from '../store/useHashCashStore';
 import { submitTransaction } from '../services/firebase';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-
+import WalletDirectory from './WalletDirectory';
 const Exchange: React.FC = () => {
-  const { userAddress, getBalance } = useHashCashStore();
+  const { userAddress, getBalance, myWallets, currentUser } = useHashCashStore();
   const [toAddress, setToAddress] = useState('');
   const [amount, setAmount] = useState(0);
   const [status, setStatus] = useState('');
   const [showScanner, setShowScanner] = useState(false);
+  const [showDirectory, setShowDirectory] = useState(false);
 
   const balance = getBalance(userAddress);
+  const isOwner = myWallets.some(w => w.address === userAddress);
 
   useEffect(() => {
+    // ... rest of effect ...
+
     let scanner: Html5QrcodeScanner | null = null;
 
     if (showScanner) {
@@ -72,6 +76,14 @@ const Exchange: React.FC = () => {
     <div className="card p-4 mb-4">
       <h3>Exchange Tokens</h3>
       <form onSubmit={handleTransfer}>
+        {!isOwner && userAddress && (
+          <div className="alert alert-warning py-2 mb-3">
+            <small>
+              <strong>Read-only mode:</strong> You don't own this wallet. 
+              Switch to one of your own wallets to send tokens.
+            </small>
+          </div>
+        )}
         <div className="form-group">
           <label className="d-flex justify-content-between">
             Recipient Address:
@@ -103,10 +115,26 @@ const Exchange: React.FC = () => {
             onChange={(e) => setAmount(Number(e.target.value))} 
           />
         </div>
-        <button type="submit" className="btn btn-success mt-3" disabled={!userAddress}>
+        <button type="submit" className="btn btn-success mt-3" disabled={!userAddress || !isOwner}>
           Send Tokens
         </button>
       </form>
+      
+      <div className="mt-4 pt-3 border-top">
+        <button 
+          className="btn btn-link btn-sm p-0 text-decoration-none" 
+          onClick={() => setShowDirectory(!showDirectory)}
+        >
+          {showDirectory ? 'Hide' : 'Show'} Wallet Directory (Send unsolicited)
+        </button>
+        {showDirectory && (
+          <WalletDirectory onSelectAddress={(address) => {
+            setToAddress(address);
+            setShowDirectory(false);
+          }} />
+        )}
+      </div>
+
       {status && <div className="mt-3 alert alert-info py-2"><small>{status}</small></div>}
     </div>
   );
