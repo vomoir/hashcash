@@ -31,6 +31,8 @@ interface HashCashState {
   mining: boolean;
   userAddress: string;
   currentUser: any | null;
+  authError: string | null;
+  authLoading: boolean;
   myWallets: WalletInfo[];
   allWallets: WalletInfo[];
   setBlockchain: (blocks: Block[]) => void;
@@ -38,18 +40,22 @@ interface HashCashState {
   setMining: (isMining: boolean) => void;
   setUserAddress: (address: string) => void;
   setCurrentUser: (user: any) => void;
+  setAuthError: (error: string | null) => void;
+  setAuthLoading: (loading: boolean) => void;
   setMyWallets: (wallets: WalletInfo[]) => void;
   setAllWallets: (wallets: WalletInfo[]) => void;
   // Computed balance helper
   getBalance: (address: string) => number;
-}
+  }
 
-export const useHashCashStore = create<HashCashState>((set, get) => ({
+  export const useHashCashStore = create<HashCashState>((set, get) => ({
   blockchain: [],
   pendingTransactions: [],
   mining: false,
   userAddress: '',
   currentUser: null,
+  authError: null,
+  authLoading: true,
   myWallets: [],
   allWallets: [],
   setBlockchain: (blocks) => set({ blockchain: blocks }),
@@ -57,6 +63,8 @@ export const useHashCashStore = create<HashCashState>((set, get) => ({
   setMining: (isMining) => set({ mining: isMining }),
   setUserAddress: (userAddress) => set({ userAddress }),
   setCurrentUser: (currentUser) => set({ currentUser }),
+  setAuthError: (authError) => set({ authError }),
+  setAuthLoading: (authLoading) => set({ authLoading }),
   setMyWallets: (myWallets) => set({ myWallets }),
   setAllWallets: (allWallets) => set({ allWallets }),
   

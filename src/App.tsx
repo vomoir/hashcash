@@ -1,26 +1,47 @@
 import React, { useEffect } from 'react';
 import { useHashCashStore } from './store/useHashCashStore';
-import { subscribeToBlockchain, subscribeToPendingTransactions, subscribeToWallets, auth, loginAnonymously } from './services/firebase';
+import { subscribeToBlockchain, subscribeToPendingTransactions, subscribeToWallets, auth, logout } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import Miner from './components/Miner';
 import Exchange from './components/Exchange';
 import Blockchain from './components/Blockchain';
 import Wallet from './components/Wallet';
+import Login from './components/Login';
 
 const App: React.FC = () => {
-  const { setBlockchain, setPendingTransactions, setUserAddress, setCurrentUser, setAllWallets, setMyWallets } = useHashCashStore();
+  const { 
+    setBlockchain, 
+    setPendingTransactions, 
+    setUserAddress, 
+    setCurrentUser, 
+    setAuthError,
+    setAuthLoading,
+    setAllWallets, 
+    setMyWallets,
+    currentUser,
+    allWallets,
+    authLoading
+  } = useHashCashStore();
 
   useEffect(() => {
     // 1. Handle Auth
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      setAuthLoading(false);
       if (user) {
-        setCurrentUser(user);
+        setAuthError(null);
+        // Only store serializable parts of the user object
+        setCurrentUser({
+          uid: user.uid,
+          isAnonymous: user.isAnonymous,
+          email: user.email,
+          displayName: user.displayName
+        });
       } else {
-        loginAnonymously().catch(console.error);
+        setCurrentUser(null);
       }
     });
 
-    // 2. Load existing wallet from localStorage (as a default selection)
+    // 2. Load existing wallet from localStorage
     const savedAddress = localStorage.getItem('hashcash_address');
     if (savedAddress) {
       setUserAddress(savedAddress);
@@ -37,11 +58,6 @@ const App: React.FC = () => {
 
     const unsubscribeWallets = subscribeToWallets((wallets) => {
       setAllWallets(wallets);
-      // Filter my wallets based on current user
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        setMyWallets(wallets.filter(w => w.ownerUid === currentUser.uid));
-      }
     });
 
     return () => {
@@ -50,13 +66,47 @@ const App: React.FC = () => {
       unsubscribePending();
       unsubscribeWallets();
     };
-  }, [setCurrentUser, setMyWallets]);
+  }, [setBlockchain, setPendingTransactions, setUserAddress, setCurrentUser, setAllWallets, setAuthLoading, setAuthError]);
+
+  // 4. Update myWallets whenever currentUser or allWallets changes
+  useEffect(() => {
+    if (currentUser && allWallets.length > 0) {
+      const filtered = allWallets.filter(w => w.ownerUid === currentUser.uid);
+      setMyWallets(filtered);
+    } else {
+      setMyWallets([]);
+    }
+  }, [currentUser, allWallets, setMyWallets]);
+
+  if (authLoading) {
+    return (
+      <div className="d-flex align-items-center justify-content-center" style={{ minHeight: '100vh' }}>
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return <Login />;
+  }
 
   return (
     <div className="container py-5">
-      <header className="text-center mb-5">
-        <h1>HashCash Simulator</h1>
-        <p className="lead">Teaching the basics of Blockchain and Proof of Work</p>
+      <header className="d-flex justify-content-between align-items-center mb-5">
+        <div className="text-start">
+          <h1>HashCash Simulator</h1>
+          <p className="lead mb-0">Teaching the basics of Blockchain and Proof of Work</p>
+        </div>
+        <div className="text-end">
+          <div className="small text-muted mb-1">
+            Logged in as: <strong>{currentUser.displayName || (currentUser.isAnonymous ? 'Guest' : currentUser.email)}</strong>
+          </div>
+          <button className="btn btn-outline-danger btn-sm" onClick={logout}>
+            Sign Out
+          </button>
+        </div>
       </header>
 
       <div className="row">

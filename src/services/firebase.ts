@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, doc, writeBatch, setDoc, getDocs, where } from "firebase/firestore";
-import { getAuth, signInAnonymously } from "firebase/auth";
+import { getAuth, signInAnonymously, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 
 // Replace this with your actual Firebase config
 const firebaseConfig = {
@@ -16,6 +16,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 
 export const blockchainCollection = collection(db, "blockchain");
 export const transactionsCollection = collection(db, "transactions");
@@ -23,6 +24,14 @@ export const walletsCollection = collection(db, "wallets");
 
 export const loginAnonymously = async () => {
   return signInAnonymously(auth);
+};
+
+export const loginWithGoogle = async () => {
+  return signInWithPopup(auth, googleProvider);
+};
+
+export const logout = async () => {
+  return signOut(auth);
 };
 
 export const registerWallet = async (address: string, ownerUid: string) => {
@@ -54,6 +63,8 @@ export const subscribeToBlockchain = (callback: (blocks: any[]) => void) => {
   return onSnapshot(q, (snapshot) => {
     const blocks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     callback(blocks);
+  }, (error) => {
+    console.error("Blockchain subscription error:", error);
   });
 };
 
@@ -62,6 +73,8 @@ export const subscribeToPendingTransactions = (callback: (txs: any[]) => void) =
   return onSnapshot(q, (snapshot) => {
     const txs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     callback(txs);
+  }, (error) => {
+    console.error("Transactions subscription error:", error);
   });
 };
 
@@ -69,6 +82,8 @@ export const subscribeToWallets = (callback: (wallets: any[]) => void) => {
   return onSnapshot(walletsCollection, (snapshot) => {
     const wallets = snapshot.docs.map(doc => doc.data());
     callback(wallets);
+  }, (error) => {
+    console.error("Wallets subscription error:", error);
   });
 };
 
